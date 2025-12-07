@@ -41,6 +41,49 @@
     @keyframes moveBg {
       from { background-position: 0 0, 0 0; }
       to { background-position: var(--move-distance-x) var(--move-distance-y), 0 0; }
+    }<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Descargar Blackout</title>
+  <style>
+    :root {
+      --tile-size: 40px;
+      --move-distance-x: 400px;
+      --move-distance-y: 400px;
+      --overlay-opacity: 0.25;
+
+      /* Glass refinado */
+      --bubble-bg: rgba(255, 255, 255, 0.18);
+      --bubble-border: rgba(255, 255, 255, 0.35);
+      --bubble-outline: rgba(0, 0, 0, 0.15);
+      --bubble-inner-shadow: rgba(0, 0, 0, 0.2);
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+
+      background-image:
+        conic-gradient(#000 90deg, #fff 0 180deg, #000 0 270deg, #fff 0),
+        linear-gradient(135deg, rgba(255,255,255,var(--overlay-opacity)) 0%, rgba(255,255,255,0) 100%);
+      background-size: var(--tile-size) var(--tile-size), 100% 100%;
+      background-position: 0 0, 0 0;
+      background-repeat: repeat, no-repeat;
+      background-blend-mode: normal, multiply;
+      animation: moveBg 18s linear infinite; /* un poco más calmado */
+    }
+
+    @keyframes moveBg {
+      from { background-position: 0 0, 0 0; }
+      to { background-position: var(--move-distance-x) var(--move-distance-y), 0 0; }
     }
 
     /* Burbuja — efecto glass refinado */
@@ -470,7 +513,6 @@
       <li><strong>Habilitar macros/contenido dinámico:</strong> Si ves “Habilitar contenido” o “Macros”, actívalo para que todas las animaciones y funciones se ejecuten.</li>
     </ul>
     <div style="margin-top:12px; text-align:left;">
-      Coloca aquí tus imágenes de guía: <br>
       <img src="assets/images/habilitar-edicion.png"
            alt="Habilitar edición en PowerPoint"
            data-caption="Paso extra: Habilitar edición en PowerPoint"
@@ -784,4 +826,10 @@
     })();
   </script>
 </body>
+</html>
+      hotspot.setAttribute('title', 'Admin hotspot (oculto)');
+    })();
+  </script>
+</body>
+
 </html>
