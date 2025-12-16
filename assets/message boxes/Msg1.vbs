@@ -1,0 +1,1 @@
+MsgBox "El archivo ""BLACKOUT.PPT"" presenta datos no reconocidos. " & vbCrLf & "El sistema lo ha clasificado como posible amenaza de tipo ""Ransomware"". " & vbCrLf & "No se ha confirmado ninguna anomalia en este momento.",262160,"Advertencia de archivo sospechoso"

@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Descargar Blackout</title>
+  <style>
+    :root {
+      --tile-size: 40px;
+      --move-distance-x: 400px;
+      --move-distance-y: 400px;
+      --overlay-opacity: 0.25;
+
+      /* Glass refinado */
+      --bubble-bg: rgba(255, 255, 255, 0.18);
+      --bubble-border: rgba(255, 255, 255, 0.35);
+      --bubble-outline: rgba(0, 0, 0, 0.15);
+      --bubble-inner-shadow: rgba(0, 0, 0, 0.2);
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+
+      background-image:
+        conic-gradient(#000 90deg, #fff 0 180deg, #000 0 270deg, #fff 0),
+        linear-gradient(135deg, rgba(255,255,255,var(--overlay-opacity)) 0%, rgba(255,255,255,0) 100%);
+      background-size: var(--tile-size) var(--tile-size), 100% 100%;
+      background-position: 0 0, 0 0;
+      background-repeat: repeat, no-repeat;
+      background-blend-mode: normal, multiply;
+      animation: moveBg 18s linear infinite; /* un poco más calmado */
+    }
+
+    @keyframes moveBg {
+      from { background-position: 0 0, 0 0; }
+      to { background-position: var(--move-distance-x) var(--move-distance-y), 0 0; }
+    }
+
+    /* Burbuja — efecto glass refinado */
+    .bubble {
+      position: relative;
+      display: inline-block;
+      background: var(--bubble-bg);
+      border-radius: 15px;
+      padding: 12px 22px;
+      backdrop-filter: blur(12px) saturate(120%);
+      -webkit-backdrop-filter: blur(12px) saturate(120%);
+      box-shadow:
+        inset 0 1px 0 var(--bubble-border),
+        inset 0 -1px 0 var(--bubble-outline),
+        0 6px 16px var(--bubble-inner-shadow);
+      outline: 1px solid var(--bubble-outline);
+      border: 1px solid var(--bubble-border);
+      margin-top: 15px;
+      box-sizing: border-box;
+    }
+
+    .bubble h3,
+    .bubble h1,
+    .bubble p,
+    .bubble ul,
+    .bubble li {
+      position: relative;
+      z-index: 2;
+      margin: 0;
+    }
+
+    header {
+      background-color: rgba(44, 62, 80, 0.9);
+      color: white;
+      padding: 20px;
+      text-shadow: 2px 2px 4px black;
+    }
+    h1 { margin: 0; font-size: 2.5em; text-shadow: 2px 2px 4px black; }
+    p { font-size: 1.2em; color: #ffffff; margin-top: 20px; text-shadow: 2px 2px 4px black; }
+    .agradecimiento { margin-top: 30px; font-size: 1.1em; color: #ffffff; font-style: italic; text-shadow: 2px 2px 4px black; }
+
+    .download-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    /* CTA recomendado */
+    .cta-recommend {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.95em;
+      color: #ffeaa7;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+      margin-top: 8px;
+    }
+    .cta-recommend .tag {
+      background: #27ae60;
+      color: #fff;
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+    }
+    .cta-recommend .note { opacity: 0.95; }
+
+    a {
+      display: inline-block;
+      padding: 15px 30px;
+      background-color: #e67e22;
+      color: white;
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 20px;
+      transition: transform 0.2s, background-color 0.3s, box-shadow 0.3s;
+      text-shadow: 2px 2px 4px black;
+      box-shadow: 0 0 0 0 rgba(192,57,43,0);
+    }
+    a:hover { background-color: #d35400; transform: scale(1.07); }
+
+    /* Animación: titilar en rojo el botón */
+    @keyframes pulseRed {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(192,57,43,0); }
+      50%      { box-shadow: 0 0 0 4px rgba(192,57,43,0.8), 0 0 12px 2px rgba(192,57,43,0.6); }
+    }
+    .flash-red { animation: pulseRed 600ms ease-in-out 2; }
+
+    /* Animación: shake de la casilla/verificación */
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      20% { transform: translateX(-6px); }
+      40% { transform: translateX(6px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+      100% { transform: translateX(0); }
+    }
+    .shake { animation: shake 500ms ease; }
+
+    /* Bloque verificación */
+    .verify-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      color: #fff;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+    }
+    .verify-box input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: #27ae60;
+      cursor: pointer;
+    }
+    .verify-hint {
+      font-size: 0.95em;
+      opacity: 0.95;
+      color: #ffeaa7;
+    }
+
+    .badge {
+      display: inline-block;
+      margin-left: 8px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.85em;
+      color: #fff;
+      background: #c0392b;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    }
+
+    .imagenes-abajo {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 20px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .imagenes-abajo img {
+      display: block;
+      max-width: 100%;
+      width: 300px;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      transition: transform 0.3s ease;
+      position: relative;
+      z-index: 1;
+      margin-top: 8px;
+      cursor: zoom-in;
+    }
+    .imagenes-abajo img:hover { transform: scale(1.03); }
+
+    .steps {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+    .steps .bubble {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 14px;
+      width: 260px;
+      min-height: 180px;
+      box-sizing: border-box;
+      text-align: center;
+    }
+    .steps .bubble h3 {
+      margin: 0 0 12px 0;
+      color: #fff;
+      font-size: 1.05em;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+      z-index: 3;
+      width: 100%;
+    }
+    .steps .bubble .step-text {
+      margin-top: 6px;
+      margin-bottom: 8px;
+      color: #fff;
+      font-size: 0.95em;
+      z-index: 3;
+      width: 100%;
+    }
+    .steps .bubble img {
+      display: block;
+      width: 220px;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+      margin-top: 8px;
+      position: relative;
+      z-index: 1;
+      cursor: zoom-in;
+    }
+
+    .captures-title {
+      margin-top: 28px;
+      margin-bottom: 8px;
+      font-size: 1.2em;
+      color: #fff;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+    }
+
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+    .lightbox[aria-hidden="false"] { display: flex; }
+
+    .lightbox-content {
+      max-width: 95%;
+      max-height: 95%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .lightbox img {
+      max-width: 100%;
+      max-height: 80vh;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+    .lightbox-caption {
+      color: #fff;
+      font-size: 1em;
+      text-align: center;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      background: rgba(255,255,255,0.12);
+      border: none;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    .lightbox-close:hover { background: rgba(255,255,255,0.18); }
+
+    footer {
+      margin-top: auto;
+      padding: 10px 36px 10px 10px; /* espacio para hotspot a la derecha */
+      background-color: rgba(44, 62, 80, 0.8);
+      color: white;
+      font-size: 0.9em;
+      text-shadow: 2px 2px 4px black;
+      position: relative;
+    }
+
+    .extra-section {
+      margin-top: 40px;
+      padding: 20px;
+      background-color: rgba(255,255,255,0.85);
+      border-radius: 10px;
+      width: 80%;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      border: 1px solid var(--bubble-border);
+      outline: 1px solid var(--bubble-outline);
+      backdrop-filter: blur(8px) saturate(115%);
+      -webkit-backdrop-filter: blur(8px) saturate(115%);
+    }
+    .extra-section h2 { text-shadow: 2px 2px 4px black; }
+
+    .opinion-btn {
+      background-color: #3498db;
+      color: white;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-size: 20px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: background-color 0.3s, transform 0.2s;
+      text-shadow: 2px 2px 4px black;
+    }
+    .opinion-btn:hover { background-color: #2980b9; transform: scale(1.1); }
+
+    .sparkle { animation: blink 1.5s infinite alternate; }
+    @keyframes blink { from { opacity: 0.3; transform: scale(0.9); } to { opacity: 1; transform: scale(1.2); } }
+
+    .stats {
+      margin-top: 12px;
+      font-size: 0.95em;
+      color: #fff;
+      opacity: 0.9;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+    }
+
+    /* Hotspot admin totalmente invisible visualmente,
+       pero el cursor cambia y es accesible por teclado */
+    .admin-hotspot {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      width: 18px;
+      height: 18px;
+      background: transparent; /* invisible */
+      border: none;
+      padding: 0;
+      margin: 0;
+      opacity: 0; /* completamente invisible */
+      cursor: default;
+    }
+    /* Indicar presencia solo con cursor y foco (sin mostrar elemento) */
+    .admin-hotspot:hover,
+    .admin-hotspot:focus {
+      cursor: pointer;
+      outline: none;
+      /* mostrar un sutil foco visual para quien use teclado */
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.06), 0 0 0 6px rgba(39,174,96,0.08);
+      opacity: 0; /* sigue invisible visualmente */
+    }
+
+    /* Toast de confirmación */
+    .toast-admin {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(20, 160, 60, 0.92);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 0.95em;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+      display: none;
+      z-index: 10000;
+    }
+
+    @media (max-width: 720px) {
+      .steps { flex-direction: column; align-items: center; }
+      .steps .bubble { width: auto; min-height: auto; }
+      .steps .bubble img { width: 90%; max-width: 320px; }
+      .imagenes-abajo img { width: 90%; max-width: 420px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 class="bubble">Descargar Blackout 🎮</h1>
+  </header>
+
+  <p class="bubble">Haz clic en el botón para descargar la carpeta completa con el juego y todos sus archivos:</p>
+
+  <!-- CTA recomendado + botones -->
+  <div class="bubble">
+    <div class="cta-recommend" id="ctaRecommend">
+      <span class="tag">Recomendado</span>
+      <span class="note">Descarga ZIP por compatibilidad y facilidad. RAR también está disponible si lo prefieres.</span>
+    </div>
+    <div class="download-buttons" id="downloadButtons" aria-disabled="true">
+      <a href="downloads/BLACKOUT DATA.zip" download data-type="zip" id="btnZip">⬇️ Descargar Carpeta Completa (.zip)</a>
+      <a href="downloads/BLACKOUT DATA.rar" download data-type="rar" id="btnRar">⬇️ Descargar Carpeta Completa (.rar)</a>
+    </div>
+    <div class="stats" id="stats">
+      ZIP: <span id="zipCount">0</span> • RAR: <span id="rarCount">0</span> • Total: <span id="totalCount">0</span>
+    </div>
+  </div>
+
+  <p class="agradecimiento bubble">
+    Gracias por dedicar un momento a probar <strong>Blackout</strong>.
+    Espero sinceramente que disfrutes la experiencia y que este juego te brinde un rato agradable.
+  </p>
+
+  <!-- Importante + verificación obligatoria -->
+  <div class="bubble" id="importantBlock">
+    <p>
+      ℹ️ <strong>Importante</strong>
+      <span class="badge">Lee antes de descargar</span><br>
+      Una vez descargado el archivo, haz <strong>clic derecho</strong> sobre él, selecciona <em>Propiedades</em> y, en la parte inferior de la ventana, habilita la casilla que dice <strong>"Desbloquear"</strong>.
+      Esto permitirá que el juego se ejecute correctamente en tu equipo.
+    </p>
+    <div class="verify-box" id="verifyBox">
+      <input type="checkbox" id="ackCheck" aria-describedby="ackHint">
+      <label for="ackCheck"><strong>He leído y entiendo estas instrucciones</strong></label>
+    </div>
+    <div id="ackHint" class="verify-hint">Marca la casilla para habilitar la descarga.</div>
+  </div>
+
+  <!-- BLOQUE PASOS -->
+  <div class="steps" aria-label="Pasos para desbloquear el archivo">
+    <div class="bubble" role="group" aria-labelledby="paso1-title">
+      <h3 id="paso1-title">Paso 1</h3>
+      <div class="step-text">Haz clic derecho sobre el juego en PowerPoint</div>
+      <img src="assets/images/paso1.png" alt="Paso 1 - Clic derecho en el archivo" loading="lazy">
+    </div>
+    <div class="bubble" role="group" aria-labelledby="paso2-title">
+      <h3 id="paso2-title">Paso 2</h3>
+      <div class="step-text">Selecciona Propiedades en el menú contextual</div>
+      <img src="assets/images/paso2.png" alt="Paso 2 - Abrir propiedades" loading="lazy">
+    </div>
+    <div class="bubble" role="group" aria-labelledby="paso3-title">
+      <h3 id="paso3-title">Paso 3</h3>
+      <div class="step-text">Marca la casilla "Desbloquear" y aplica</div>
+      <img src="assets/images/paso3.png" alt="Paso 3 - Habilitar desbloquear" loading="lazy">
+    </div>
+  </div>
+  <!-- FIN BLOQUE PASOS -->
+
+  <!-- Guía posterior a descarga: habilitar edición y macros -->
+  <div class="extra-section bubble" id="postDownloadGuide">
+    <h2>Después de descargar</h2>
+    <ul style="text-align:left;">
+      <li><strong>Habilitar edición:</strong> Al abrir el archivo en PowerPoint, si aparece un banner amarillo, haz clic en “Habilitar edición”.</li>
+      <li><strong>Habilitar macros/contenido dinámico:</strong> Si ves “Habilitar contenido” o “Macros”, actívalo para que todas las animaciones y funciones se ejecuten.</li>
+    </ul>
+    <div style="margin-top:12px; text-align:left;">
+      Coloca aquí tus imágenes de guía: <br>
+      <img src="assets/images/habilitar-edicion.png"
+           alt="Habilitar edición en PowerPoint"
+           data-caption="Paso extra: Habilitar edición en PowerPoint"
+           style="max-width:220px; border-radius:8px; box-shadow:0 6px 14px rgba(0,0,0,0.25); cursor: zoom-in;"
+           loading="lazy">
+      <img src="assets/images/habilitar-macros.png"
+           alt="Habilitar macros en PowerPoint"
+           data-caption="Paso extra: Habilitar macros y contenido dinámico"
+           style="max-width:220px; border-radius:8px; box-shadow:0 6px 14px rgba(0,0,0,0.25); margin-left:8px; cursor: zoom-in;"
+           loading="lazy">
+    </div>
+  </div>
+
+  <!-- Capturas del Juego -->
+  <div class="captures-title bubble" role="heading" aria-level="2">Capturas del Juego</div>
+
+  <div class="imagenes-abajo" aria-label="Capturas del juego">
+    <img src="assets/images/Level1.png" alt="Captura Nivel 1" data-caption="Nivel 1 — Captura del juego" loading="lazy">
+    <img src="assets/images/Level2.png" alt="Captura Nivel 2" data-caption="Nivel 2 — Captura del juego" loading="lazy">
+  </div>
+
+  <div class="extra-section bubble">
+    <h2>Requisitos mínimos</h2>
+    <ul style="text-align:left;">
+      <li>PowerPoint 2016 o superior</li>
+      <li>Navegador actualizado (Chrome, Edge, Firefox)</li>
+      <li>512 MB de espacio libre</li>
+      <li>Altavoces o auriculares para mejor experiencia</li>
+    </ul>
+  </div>
+
+  <div class="extra-section bubble">
+    <h2>Notas de la versión</h2>
+    <p style="text-align:left;">
+      Versión 1.0 (Diciembre 2025):<br>
+      - Primera publicación del juego.<br>
+      - Incluye dos niveles de prueba.<br>
+      - Página web con botón de descarga y agradecimiento.<br>
+    </p>
+  </div>
+
+  <div class="extra-section bubble">
+    <h2>Comparte Blackout</h2>
+    <a href="https://wa.me/?text=Descarga%20el%20juego%20Blackout%20aquí:%20https://blackoutppt.netlify.app/" target="_blank">
+      📲 Compartir en WhatsApp
+    </a>
+  </div>
+
+  <div class="extra-section bubble">
+    <h2>Déjame tu opinión</h2>
+    <a class="opinion-btn" href="https://form.typeform.com/to/OXwMrbEY" target="_blank">
+      <span class="sparkle">✨</span> Compartir Opinión en Typeform <span class="sparkle">✨</span>
+    </a>
+  </div>
+
+  <footer class="bubble">
+    © 2025 - Creado por Cex
+    <!-- Hotspot oculto admin: invisible visualmente, cursor cambia al pasar -->
+    <button class="admin-hotspot" id="adminHotspot" aria-label="Admin hotspot" tabindex="0"></button>
+  </footer>
+
+  <!-- Lightbox -->
+  <div id="lightbox" class="lightbox" role="dialog" aria-hidden="true" aria-label="Visor de imagen">
+    <button class="lightbox-close" aria-label="Cerrar visor" id="lightboxClose">Cerrar ✕</button>
+    <div class="lightbox-content" role="document">
+      <img id="lightboxImage" src="" alt="">
+      <div id="lightboxCaption" class="lightbox-caption"></div>
+    </div>
+  </div>
+
+  <!-- Toast admin -->
+  <div id="toastAdmin" class="toast-admin" role="status" aria-live="polite">
+    Contadores reiniciados
+  </div>
+
+  <script>
+    // Auto-recomendación según plataforma/navegador
+    (function () {
+      const cta = document.getElementById('ctaRecommend');
+      const btnZip = document.getElementById('btnZip');
+      const btnRar = document.getElementById('btnRar');
+      const ua = navigator.userAgent.toLowerCase();
+
+      let recommendation = 'Zip es recomendado por compatibilidad general.';
+      const isApple = ua.includes('mac os') || ua.includes('iphone') || ua.includes('ipad');
+      const isWindows = ua.includes('windows');
+      const isAndroid = ua.includes('android');
+
+      if (isApple) {
+        recommendation = 'En macOS/iOS, ZIP suele abrirse sin apps extra. RAR está disponible si lo prefieres.';
+      } else if (isWindows) {
+        recommendation = 'En Windows, ZIP es la opción más directa. RAR también funciona si ya usas WinRAR/7-Zip.';
+      } else if (isAndroid) {
+        recommendation = 'En Android, ZIP es más fácil de abrir. RAR también está disponible si lo prefieres.';
+      }
+
+      btnZip.style.filter = 'drop-shadow(0 0 6px rgba(39,174,96,0.6))';
+      cta.querySelector('.note').textContent = recommendation +
+        ' Puedes elegir RAR sin problema; ambos contienen los mismos archivos.';
+    })();
+
+    // Gating y feedback visual
+    (function () {
+      const ack = document.getElementById('ackCheck');
+      const verifyBox = document.getElementById('verifyBox');
+      const btns = document.getElementById('downloadButtons');
+
+      btns.addEventListener('click', function (e) {
+        const target = e.target.closest('a');
+        if (!target) return;
+        if (!ack.checked) {
+          e.preventDefault();
+          target.classList.add('flash-red');
+          verifyBox.classList.add('shake');
+          ack.focus();
+          setTimeout(() => {
+            target.classList.remove('flash-red');
+            verifyBox.classList.remove('shake');
+          }, 800);
+          return;
+        }
+      });
+
+      function updateAria() {
+        btns.setAttribute('aria-disabled', ack.checked ? 'false' : 'true');
+      }
+      ack.addEventListener('change', updateAria);
+      updateAria();
+    })();
+
+    // Medición de clics: contador local + envío opcional con sendBeacon
+    (function () {
+      const statsEl = {
+        zip: document.getElementById('zipCount'),
+        rar: document.getElementById('rarCount'),
+        total: document.getElementById('totalCount'),
+      };
+      const btns = document.getElementById('downloadButtons');
+
+      function loadCounts() {
+        const counts = JSON.parse(localStorage.getItem('blackout_counts') || '{"zip":0,"rar":0,"total":0}');
+        statsEl.zip.textContent = counts.zip;
+        statsEl.rar.textContent = counts.rar;
+        statsEl.total.textContent = counts.total;
+        return counts;
+      }
+      function saveCounts(counts) {
+        localStorage.setItem('blackout_counts', JSON.stringify(counts));
+        statsEl.zip.textContent = counts.zip;
+        statsEl.rar.textContent = counts.rar;
+        statsEl.total.textContent = counts.total;
+      }
+      let counts = loadCounts();
+
+      btns.addEventListener('click', function (e) {
+        const a = e.target.closest('a');
+        if (!a) return;
+        const type = a.getAttribute('data-type');
+        const ack = document.getElementById('ackCheck');
+        if (ack.checked) {
+          if (type === 'zip') counts.zip++;
+          if (type === 'rar') counts.rar++;
+          counts.total++;
+          saveCounts(counts);
+
+          try {
+            const payload = JSON.stringify({
+              type,
+              timestamp: Date.now(),
+              userAgent: navigator.userAgent,
+            });
+            navigator.sendBeacon && navigator.sendBeacon('/analytics/download', payload);
+          } catch (err) {
+            // Silencioso
+          }
+        }
+      });
+
+      // Exponer un reinicio seguro desde el hotspot
+      window.__resetBlackoutCounts = function () {
+        counts = { zip: 0, rar: 0, total: 0 };
+        saveCounts(counts);
+      };
+    })();
+
+    // Lightbox para imágenes (incluye: capturas, pasos y post-descarga)
+    (function () {
+      const lightbox = document.getElementById('lightbox');
+      const lightboxImage = document.getElementById('lightboxImage');
+      const lightboxCaption = document.getElementById('lightboxCaption');
+      const closeBtn = document.getElementById('lightboxClose');
+
+      const zoomable = document.querySelectorAll('.imagenes-abajo img, .steps .bubble img, #postDownloadGuide img');
+
+      function openLightbox(src, alt, caption) {
+        lightboxImage.src = src;
+        lightboxImage.alt = alt || '';
+        lightboxCaption.textContent = caption || alt || '';
+        lightbox.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        closeBtn.focus();
+      }
+
+      function closeLightbox() {
+        lightbox.setAttribute('aria-hidden', 'true');
+        lightboxImage.src = '';
+        lightboxImage.alt = '';
+        lightboxCaption.textContent = '';
+        document.body.style.overflow = '';
+      }
+
+      zoomable.forEach(img => {
+        img.addEventListener('click', () => {
+          const src = img.src;
+          const alt = img.alt || '';
+          const caption = img.dataset.caption || alt || '';
+          openLightbox(src, alt, caption);
+        });
+        img.setAttribute('tabindex', '0');
+        img.style.cursor = 'zoom-in';
+        img.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            img.click();
+          }
+        });
+      });
+
+      lightbox.addEventListener('click', (e) => {
+        if (e.target === lightbox || e.target === closeBtn) {
+          closeLightbox();
+        }
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && lightbox.getAttribute('aria-hidden') === 'false') {
+          closeLightbox();
+        }
+      });
+
+      const content = document.querySelector('.lightbox-content');
+      content.addEventListener('click', (e) => { e.stopPropagation(); });
+
+      let startY = null;
+      lightbox.addEventListener('touchstart', (e) => {
+        if (e.touches && e.touches.length === 1) startY = e.touches[0].clientY;
+      });
+      lightbox.addEventListener('touchend', (e) => {
+        if (!startY) return;
+        const endY = (e.changedTouches && e.changedTouches[0].clientY) || 0;
+        if (endY - startY > 100) { closeLightbox(); }
+        startY = null;
+      });
+    })();
+
+    // Hotspot oculto con PIN para reiniciar contadores
+    (function () {
+      const hotspot = document.getElementById('adminHotspot');
+      const toast = document.getElementById('toastAdmin');
+      const PIN = '33919799';
+
+      function showToast(msg) {
+        toast.textContent = msg || 'Contadores reiniciados';
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 1800);
+      }
+
+      function triggerReset() {
+        // Reiniciar en localStorage (fallback por si la función expuesta no existe)
+        if (window.__resetBlackoutCounts) {
+          window.__resetBlackoutCounts();
+        } else {
+          localStorage.setItem('blackout_counts', '{"zip":0,"rar":0,"total":0}');
+          const zipEl = document.getElementById('zipCount');
+          const rarEl = document.getElementById('rarCount');
+          const totalEl = document.getElementById('totalCount');
+          zipEl && (zipEl.textContent = '0');
+          rarEl && (rarEl.textContent = '0');
+          totalEl && (totalEl.textContent = '0');
+        }
+        showToast('Contadores reiniciados');
+      }
+
+      hotspot.addEventListener('click', function () {
+        const input = prompt('Introduce PIN:');
+        if (input === null) return; // cancelado
+        if (String(input).trim() === PIN) {
+          triggerReset();
+        } else {
+          showToast('PIN incorrecto');
+        }
+      });
+
+      // Soporte por teclado: Enter o Space activa hotspot
+      hotspot.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          const input = prompt('Introduce PIN:');
+          if (input === null) return;
+          if (String(input).trim() === PIN) {
+            triggerReset();
+          } else {
+            showToast('PIN incorrecto');
+          }
+        }
+      });
+
+      // Accesibilidad básica
+      hotspot.setAttribute('aria-hidden', 'false');
+      hotspot.setAttribute('title', 'Admin hotspot (oculto)');
+    })();
+  </script>
+</body>
+</html>
